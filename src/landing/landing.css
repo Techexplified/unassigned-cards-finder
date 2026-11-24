@@ -122,6 +122,9 @@ body {
   object-fit: contain;
   display: block;
   user-select: none;
+  border: none;
+  outline: none;
+  box-shadow: none;
 }
 
 /* Fallback placeholder when illustration file is missing */
@@ -165,7 +168,7 @@ body {
   justify-content: center;
 }
 
-/* Heading with Accent Underline */
+/* Heading */
 .landing-title {
   font-size: 23px;
   font-weight: 800;
@@ -173,23 +176,6 @@ body {
   color: var(--text-dark);
   letter-spacing: -0.02em;
   margin-bottom: 8px;
-}
-
-.title-highlight {
-  position: relative;
-  display: inline-block;
-}
-
-.title-highlight::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -3px;
-  width: 96%;
-  height: 4.5px;
-  background-color: var(--accent-yellow);
-  border-radius: 999px;
-  transform: rotate(-0.5deg);
 }
 
 /* Subtitle */

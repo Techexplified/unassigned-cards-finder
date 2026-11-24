@@ -46,28 +46,14 @@ function renderHeader() {
 }
 
 /**
- * Renders the heading with the yellow underline accent under "Find & Assign".
- * Uses textContent and node insertion only (no innerHTML).
+ * Renders the heading.
+ * All text is assigned strictly via textContent (no innerHTML).
  *
  * @param {string} fullTitle
  */
 function renderHeading(fullTitle) {
   if (!landingTitleEl) return;
-  landingTitleEl.textContent = '';
-
-  const accentText = 'Find & Assign';
-  if (fullTitle.startsWith(accentText)) {
-    const highlightSpan = document.createElement('span');
-    highlightSpan.className = 'title-highlight';
-    highlightSpan.textContent = accentText;
-
-    const restTextNode = document.createTextNode(fullTitle.slice(accentText.length));
-
-    landingTitleEl.appendChild(highlightSpan);
-    landingTitleEl.appendChild(restTextNode);
-  } else {
-    landingTitleEl.textContent = fullTitle;
-  }
+  landingTitleEl.textContent = fullTitle;
 }
 
 /**
