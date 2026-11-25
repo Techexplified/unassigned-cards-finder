@@ -27,6 +27,8 @@ if (typeof window !== 'undefined' && typeof window.TrelloPowerUp !== 'undefined'
 // Global UI State Store
 const store = createStore({
   view: 'landing', // 'landing' | 'scanning' | 'results'
+  isAuthorized: false,
+  landingMessage: '',
   scanResult: null,
   // Results view state
   resultsViewMode: 'unassigned', // 'unassigned' | 'all'
@@ -35,8 +37,37 @@ const store = createStore({
   sortOrder: 'list-asc', // 'list-asc' | 'list-desc' | 'name-asc' | 'name-desc'
   selectedCardIds: new Set(),
   collapsedListIds: new Set(),
+  recentlyAssignedIds: new Set(),
   dialogOpen: false,
+  dismissedTruncatedNotice: false,
 });
+
+// Check initial authorization state
+if (t) {
+  dataSource
+    .isAuthorized(t)
+    .then((authorized) => {
+      store.setState({ isAuthorized: !!authorized });
+    })
+    .catch(() => {
+      store.setState({ isAuthorized: false });
+    });
+} else {
+  // Preview / dev mode without t
+  dataSource.isAuthorized(null).then((authorized) => {
+    store.setState({ isAuthorized: !!authorized });
+  });
+}
+
+// Handles authorization revocation / expiration
+async function handleAuthError(message = 'Please reconnect to Trello.') {
+  await dataSource.clearAuthorization(t);
+  store.setState({
+    isAuthorized: false,
+    view: 'landing',
+    landingMessage: message,
+  });
+}
 
 // App coordinator
 function initApp() {
@@ -70,6 +101,8 @@ function initApp() {
 
     if (state.view === 'landing') {
       currentViewInstance = mountLandingView(viewContainer, {
+        t,
+        store,
         onStartScan: () => {
           store.setState({ view: 'scanning' });
         },
@@ -89,18 +122,21 @@ function initApp() {
             sortOrder: 'list-asc',
             selectedCardIds: new Set(),
             collapsedListIds: new Set(),
+            recentlyAssignedIds: new Set(),
             dialogOpen: false,
+            dismissedTruncatedNotice: false,
           });
         },
         onBack: () => {
           store.setState({ view: 'landing' });
         },
+        onAuthError: handleAuthError,
       });
     } else if (state.view === 'results') {
       currentViewInstance = mountResultsView(viewContainer, {
         t,
         store,
-        dataSource,
+        onAuthError: handleAuthError,
       });
     }
   }

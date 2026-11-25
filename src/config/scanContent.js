@@ -27,5 +27,14 @@ export const scanContent = {
     defaultMessage: 'Unable to scan your Trello board. Please check your permissions and try again.',
     retryLabel: 'Try again',
     backLabel: 'Back',
+    errorMessages: {
+      auth: 'Authorization expired. Please reconnect to Trello.',
+      forbidden: 'You do not have permission to access this board.',
+      not_found: 'The board was not found on Trello.',
+      rate_limit: 'Trello API rate limit reached. Please wait a moment and try again.',
+      server: 'Trello servers are currently experiencing issues. Please try again later.',
+      network: 'Network connection error. Please check your connection and try again.',
+      unknown: 'Unable to scan your Trello board. Please try again.',
+    },
   },
 };

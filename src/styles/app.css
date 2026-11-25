@@ -198,6 +198,17 @@ body {
   margin-bottom: 16px;
 }
 
+.landing-inline-message {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background-color: #FFF5F5;
+  border: 1px solid #FFD4D4;
+  border-radius: 8px;
+  color: #C53030;
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
 .feature-list {
   list-style: none;
   display: flex;
@@ -792,6 +803,44 @@ body {
   color: var(--text-muted);
 }
 
+/* Dismissible notices above cards list */
+.dismissible-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.banner-recently-assigned {
+  background-color: #EEF8F1;
+  border: 1px solid #C4EED2;
+  color: #14532D;
+}
+
+.banner-truncated {
+  background-color: #FEF9EE;
+  border: 1px solid #FBE6B3;
+  color: #854D0E;
+}
+
+.btn-banner-clear {
+  background: transparent;
+  border: none;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.btn-banner-clear:hover {
+  text-decoration: underline;
+}
+
 /* Assign Members CTA button */
 .btn-assign-members {
   height: 38px;
@@ -1020,6 +1069,32 @@ body {
   text-overflow: ellipsis;
 }
 
+/* Member Badges for assigned cards */
+.card-members-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.member-initials-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  user-select: none;
+}
+
+.member-badge-more {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
 .card-labels {
   display: flex;
   align-items: center;
@@ -1158,14 +1233,16 @@ body {
   max-width: 320px;
 }
 
-/* In-Page Assign Dialog Placeholder */
-.dialog-overlay {
+/* ==========================================================================
+   ASSIGN MEMBERS DIALOG (screenshots 1 & 2)
+   ========================================================================== */
+.assign-dialog-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(28, 22, 51, 0.4);
+  background-color: rgba(28, 22, 51, 0.45);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
@@ -1173,74 +1250,547 @@ body {
   z-index: 1000;
 }
 
-.dialog-modal {
+.assign-dialog-panel {
   background-color: var(--surface-white);
-  border-radius: 14px;
+  border-radius: 16px;
   width: 100%;
   max-width: 380px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  box-shadow: 0 12px 32px rgba(28, 22, 51, 0.18);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   animation: dialogPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
 }
 
-@keyframes dialogPop {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.assign-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.dialog-title {
-  font-size: 16px;
+.assign-dialog-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.assign-dialog-icon {
+  color: var(--primary-start);
+  display: inline-flex;
+}
+
+.assign-dialog-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text-dark);
+  letter-spacing: -0.01em;
+}
+
+.btn-dialog-x {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 4px;
+  display: inline-flex;
+}
+
+.btn-dialog-x:hover:not(:disabled) {
+  color: var(--text-dark);
+  background-color: var(--bg-tint-light);
+}
+
+.assign-dialog-subtext {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Combobox Section */
+.assign-combobox-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.assign-combobox-label {
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--text-dark);
 }
 
-.dialog-message {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.45;
+.assign-combobox-wrapper {
+  position: relative;
+  width: 100%;
 }
 
-.dialog-badge {
-  display: inline-flex;
-  align-self: flex-start;
-  padding: 4px 10px;
-  background-color: var(--bg-tint-light);
-  color: var(--primary-start);
+.combobox-input-box {
+  width: 100%;
+  min-height: 38px;
+  border: 1.5px solid #7C4DDB;
   border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
+  background-color: var(--surface-white);
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
 }
 
-.dialog-actions {
+.combobox-input-box:focus-within {
+  box-shadow: 0 0 0 2px rgba(124, 77, 219, 0.2);
+}
+
+.combobox-left-icon {
+  color: var(--text-muted);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.combobox-selected-view {
   display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-member-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-clear-member {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 4px;
+  margin-left: auto;
+}
+
+.btn-clear-member:hover {
+  color: var(--text-dark);
+}
+
+.combobox-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--text-dark);
+  min-width: 0;
+}
+
+.combobox-chevron {
+  color: var(--text-muted);
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+/* Combobox Dropdown */
+.combobox-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+  background-color: var(--surface-white);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  z-index: 1010;
+  padding: 4px;
+}
+
+.combobox-option-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.combobox-option-item:hover,
+.combobox-option-item.is-active {
+  background-color: var(--bg-tint-light);
+}
+
+.member-avatar-circle {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.member-option-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.combobox-empty-item {
+  padding: 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Selection Summary Box */
+.assign-summary-box {
+  background-color: var(--bg-tint-light);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.summary-box-icon {
+  color: var(--primary-start);
+  display: inline-flex;
+}
+
+.summary-box-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summary-count-line {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.summary-lists-line {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* Footer & Buttons */
+.assign-dialog-footer {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 10px;
   margin-top: 6px;
 }
 
-.btn-dialog-close {
-  height: 34px;
+.btn-dialog-cancel {
+  height: 38px;
   padding: 0 16px;
-  background-color: var(--primary-start);
-  color: var(--surface-white);
-  border: none;
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
+  background-color: var(--surface-white);
+  color: var(--text-dark);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.btn-dialog-close:focus-visible {
-  outline: 2px solid var(--primary-start);
-  outline-offset: 2px;
+.btn-dialog-cancel:hover:not(:disabled) {
+  background-color: var(--bg-tint-light);
+}
+
+.btn-dialog-primary {
+  height: 38px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary-start) 0%, var(--primary-end) 100%);
+  color: var(--surface-white);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 3px 10px rgba(91, 43, 181, 0.25);
+}
+
+.btn-dialog-primary:hover:not(:disabled) {
+  box-shadow: 0 5px 14px rgba(91, 43, 181, 0.35);
+}
+
+.btn-dialog-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-dialog-secondary {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background-color: var(--surface-white);
+  color: var(--text-dark);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-dialog-secondary:hover {
+  background-color: var(--bg-tint-light);
+}
+
+/* In-flight assigning state */
+.assign-in-flight-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 10px;
+  gap: 16px;
+  text-align: center;
+}
+
+.assign-spinner-large {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(91, 43, 181, 0.2);
+  border-top-color: var(--primary-start);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.assign-progress-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+/* Success State Body (screenshot 2) */
+.assign-success-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.assign-success-graphic {
+  position: relative;
+  width: 140px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.graphic-board-mockup {
+  width: 120px;
+  height: 75px;
+  background: linear-gradient(180deg, #F9F7FD 0%, #EDE5FA 100%);
+  border: 1.5px solid #7C4DDB;
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.graphic-header-bar {
+  display: flex;
+  gap: 4px;
+}
+
+.graphic-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #C8B9E6;
+}
+
+.graphic-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.graphic-avatar-circle {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid #7C4DDB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  color: var(--text-dark);
+}
+
+.graphic-badge-check {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  display: inline-flex;
+}
+
+.graphic-sparkles {
+  position: absolute;
+  top: -4px;
+  left: 2px;
+  color: var(--accent-yellow);
+}
+
+.assign-success-heading {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text-dark);
+}
+
+.assign-success-subtext {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.assign-member-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px;
+  background-color: var(--bg-tint-light);
+  border-radius: 999px;
+  color: var(--primary-start);
+  font-weight: 700;
+  font-size: 13px;
+  margin: 4px 0 10px 0;
+}
+
+/* Assignment Summary Card (screenshot 2) */
+.assign-summary-card {
+  width: 100%;
+  background-color: var(--bg-tint-light);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.summary-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.summary-card-icon {
+  color: var(--primary-start);
+  display: inline-flex;
+}
+
+.summary-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding-top: 2px;
+}
+
+.stat-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.stat-number {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary-start);
+}
+
+.stat-check-icon {
+  display: inline-flex;
+  margin-bottom: -2px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.stat-completed-text {
+  color: #15803D;
+  font-weight: 700;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 28px;
+  background-color: #DCD3EB;
+}
+
+/* Partial State */
+.assign-failed-list {
+  max-height: 140px;
+  overflow-y: auto;
+  border: 1px solid #FFD4D4;
+  border-radius: 8px;
+  background-color: #FFF5F5;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.failed-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 4px 6px;
+}
+
+.failed-card-name {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.failed-card-reason {
+  color: #C53030;
+}
+
+/* Error State */
+.assign-error-body {
+  padding: 16px 0;
+}
+
+.assign-error-message {
+  font-size: 13px;
+  color: #C53030;
+  background-color: #FFF5F5;
+  border: 1px solid #FFD4D4;
+  border-radius: 8px;
+  padding: 10px 14px;
 }
 
 /* Decorative bottom wave (used in landing & scanning) */
@@ -1259,6 +1809,24 @@ body {
   width: 100%;
   height: 100%;
   display: block;
+}
+
+/* Animations */
+@keyframes dialogPop {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Respect prefers-reduced-motion */

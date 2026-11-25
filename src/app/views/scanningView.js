@@ -9,11 +9,12 @@ import { icons } from '../../ui/icons.js';
  *   t: any,
  *   dataSource: any,
  *   onComplete: (scanResult: any) => void,
- *   onBack: () => void
+ *   onBack: () => void,
+ *   onAuthError: (message: string) => void
  * }} params
  * @returns {{ destroy: () => void }}
  */
-export function mountScanningView(container, { t, dataSource, onComplete, onBack }) {
+export function mountScanningView(container, { t, dataSource, onComplete, onBack, onAuthError }) {
   let isCancelled = false;
 
   container.innerHTML = `
@@ -182,8 +183,22 @@ export function mountScanningView(container, { t, dataSource, onComplete, onBack
 
   function showError(err) {
     if (isCancelled) return;
+
+    // Check if error is an auth failure
+    if (err?.kind === 'auth' || err?.status === 401) {
+      if (typeof onAuthError === 'function') {
+        onAuthError('Authorization expired. Please reconnect to Trello.');
+      }
+      return;
+    }
+
     if (mainContentEl) mainContentEl.style.display = 'none';
     if (!errorContainerEl) return;
+
+    const friendlyMsg =
+      scanContent.error.errorMessages?.[err?.kind] ||
+      err?.message ||
+      scanContent.error.defaultMessage;
 
     errorContainerEl.style.display = 'block';
     errorContainerEl.innerHTML = `
@@ -198,7 +213,7 @@ export function mountScanningView(container, { t, dataSource, onComplete, onBack
 
     const msgEl = errorContainerEl.querySelector('#scanErrorMessage');
     if (msgEl) {
-      msgEl.textContent = err?.message || scanContent.error.defaultMessage;
+      msgEl.textContent = friendlyMsg;
     }
 
     errorContainerEl.querySelector('#btnRetryScan')?.addEventListener('click', () => {
@@ -219,7 +234,7 @@ export function mountScanningView(container, { t, dataSource, onComplete, onBack
       const result = await dataSource.startScan(t, updateProgress);
       if (isCancelled) return;
 
-      // Hold at 100% for 300ms as required
+      // Hold at 100% for completionHoldMs (~300ms) as required
       updateProgress({ stage: 'analyze', percent: 100 });
       await new Promise((r) => setTimeout(r, scanContent.timing.completionHoldMs));
 

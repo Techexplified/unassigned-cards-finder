@@ -1,4 +1,6 @@
+import { getAvatarColor } from '../../config/assignContent.js';
 import { resultsContent } from '../../config/resultsContent.js';
+import * as dataSource from '../../data/dataSource.js';
 import { icons } from '../../ui/icons.js';
 import {
   applyFilters,
@@ -7,6 +9,7 @@ import {
   groupByList,
   totals,
 } from '../selectors.js';
+import { createAssignDialog } from './assignDialog.js';
 
 /**
  * Mounts the results view into the given container.
@@ -14,12 +17,12 @@ import {
  * @param {HTMLElement} container
  * @param {{
  *   t: any,
- *   store: { getState: () => any, setState: (partial: any) => void, subscribe: (listener: any) => () => void },
- *   dataSource: { openCard: (t: any, cardId: string) => void }
+ *   store: any,
+ *   onAuthError: (message: string) => void
  * }} param1
  * @returns {{ destroy: () => void }}
  */
-export function mountResultsView(container, { t, store, dataSource }) {
+export function mountResultsView(container, { t, store, onAuthError }) {
   let searchDebounceTimer = null;
   let unsubscribeStore = null;
 
@@ -143,6 +146,9 @@ export function mountResultsView(container, { t, store, dataSource }) {
           </div>
         </div>
 
+        <!-- Dismissible notices area (Truncated and Recently Updated) -->
+        <div id="resultsNoticesArea" style="display: flex; flex-direction: column;"></div>
+
         <!-- Scrollable Cards Region -->
         <div
           class="results-cards-container"
@@ -152,30 +158,12 @@ export function mountResultsView(container, { t, store, dataSource }) {
         ></div>
       </main>
 
-      <!-- Assign Members In-Page Dialog Placeholder -->
-      <div
-        id="assignDialogOverlay"
-        class="dialog-overlay"
-        style="display: none;"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="dialogTitle"
-      >
-        <div class="dialog-modal">
-          <h2 class="dialog-title" id="dialogTitle">${resultsContent.copy.assignDialog.title}</h2>
-          <p class="dialog-message">${resultsContent.copy.assignDialog.message}</p>
-          <div class="dialog-badge" id="dialogCountBadge"></div>
-          <div class="dialog-actions">
-            <button type="button" class="btn-dialog-close" id="btnDialogClose">
-              ${resultsContent.copy.assignDialog.closeLabel}
-            </button>
-          </div>
-        </div>
-      </div>
+      <!-- In-Page Assign Members Dialog Container -->
+      <div id="assignDialogHost"></div>
     </div>
   `;
 
-  // Grab cached DOM elements
+  // Cached DOM elements
   const boardNameText = container.querySelector('#boardNameText');
   const filterRadioUnassigned = container.querySelector('#filterRadioUnassigned');
   const filterRadioAll = container.querySelector('#filterRadioAll');
@@ -189,12 +177,120 @@ export function mountResultsView(container, { t, store, dataSource }) {
   const searchInput = container.querySelector('#searchInput');
   const sortSelect = container.querySelector('#sortSelect');
   const resultsCardsContainer = container.querySelector('#resultsCardsContainer');
-  const assignDialogOverlay = container.querySelector('#assignDialogOverlay');
-  const dialogCountBadge = container.querySelector('#dialogCountBadge');
-  const btnDialogClose = container.querySelector('#btnDialogClose');
+  const resultsNoticesArea = container.querySelector('#resultsNoticesArea');
+  const assignDialogHost = container.querySelector('#assignDialogHost');
+
+  // Member lookup map
+  function getMemberMap() {
+    const { scanResult } = store.getState();
+    const map = new Map();
+    (scanResult?.members || []).forEach((m) => map.set(m.id, m));
+    return map;
+  }
+
+  // Create Assign Dialog Controller
+  const assignDialog = createAssignDialog({
+    container: assignDialogHost,
+    t,
+    store,
+    triggerButton: btnAssignMembers,
+    onSuccess: ({ succeededCardIds, member, action }) => {
+      // 1. Immutable update of scanResult in memory
+      const currentState = store.getState();
+      const nextCards = (currentState.scanResult?.cards || []).map((card) => {
+        if (succeededCardIds.includes(card.id)) {
+          const nextMembers = card.idMembers.includes(member.id)
+            ? card.idMembers
+            : [...card.idMembers, member.id];
+          return { ...card, idMembers: nextMembers };
+        }
+        return card;
+      });
+
+      const nextScanResult = {
+        ...currentState.scanResult,
+        cards: nextCards,
+      };
+
+      // 2. Remove succeeded IDs from selectedCardIds
+      const nextSelectedCardIds = new Set(currentState.selectedCardIds);
+      succeededCardIds.forEach((id) => nextSelectedCardIds.delete(id));
+
+      if (action === 'view') {
+        store.setState({
+          scanResult: nextScanResult,
+          selectedCardIds: nextSelectedCardIds,
+          resultsViewMode: 'all',
+          recentlyAssignedIds: new Set(succeededCardIds),
+        });
+      } else {
+        // action === 'more'
+        store.setState({
+          scanResult: nextScanResult,
+          selectedCardIds: new Set(),
+          resultsViewMode: 'unassigned',
+          recentlyAssignedIds: new Set(),
+        });
+        resultsCardsContainer?.focus();
+      }
+    },
+    onAuthError,
+  });
 
   /**
-   * Updates sidebar counts and active filter tabs
+   * Updates dismissible notices (Truncated and Recently Updated)
+   */
+  function updateNotices(currentState) {
+    if (!resultsNoticesArea) return;
+    resultsNoticesArea.textContent = '';
+
+    const { scanResult, recentlyAssignedIds, dismissedTruncatedNotice } = currentState;
+
+    // Recently Updated Notice
+    if (recentlyAssignedIds && recentlyAssignedIds.size > 0) {
+      const banner = document.createElement('div');
+      banner.className = 'dismissible-banner banner-recently-assigned';
+
+      const text = document.createElement('span');
+      text.textContent = `Showing ${recentlyAssignedIds.size} card${recentlyAssignedIds.size === 1 ? '' : 's'} you just updated.`;
+
+      const clearBtn = document.createElement('button');
+      clearBtn.type = 'button';
+      clearBtn.className = 'btn-banner-clear';
+      clearBtn.textContent = 'Clear';
+      clearBtn.addEventListener('click', () => {
+        store.setState({ recentlyAssignedIds: new Set() });
+      });
+
+      banner.appendChild(text);
+      banner.appendChild(clearBtn);
+      resultsNoticesArea.appendChild(banner);
+    }
+
+    // Truncated Board Notice (first 1000 cards)
+    if (scanResult?.truncated && !dismissedTruncatedNotice) {
+      const banner = document.createElement('div');
+      banner.className = 'dismissible-banner banner-truncated';
+
+      const text = document.createElement('span');
+      text.textContent = 'Showing the first 1000 cards on this board.';
+
+      const dismissBtn = document.createElement('button');
+      dismissBtn.type = 'button';
+      dismissBtn.className = 'btn-banner-clear';
+      dismissBtn.textContent = 'Dismiss';
+      dismissBtn.addEventListener('click', () => {
+        store.setState({ dismissedTruncatedNotice: true });
+      });
+
+      banner.appendChild(text);
+      banner.appendChild(dismissBtn);
+      resultsNoticesArea.appendChild(banner);
+    }
+  }
+
+  /**
+   * Updates sidebar counts and list checkboxes
    */
   function updateSidebar(currentState) {
     const { scanResult, resultsViewMode, selectedListIds } = currentState;
@@ -331,12 +427,19 @@ export function mountResultsView(container, { t, store, dataSource }) {
       sortOrder,
       selectedCardIds,
       collapsedListIds,
+      recentlyAssignedIds,
     } = currentState;
     if (!resultsCardsContainer || !scanResult) return;
 
     resultsCardsContainer.textContent = '';
 
-    const viewCards = getViewCards(scanResult, resultsViewMode);
+    let viewCards = getViewCards(scanResult, resultsViewMode);
+
+    // If recentlyAssignedIds filter is active, filter cards to those IDs
+    if (recentlyAssignedIds && recentlyAssignedIds.size > 0) {
+      viewCards = viewCards.filter((c) => recentlyAssignedIds.has(c.id));
+    }
+
     const filteredCards = applyFilters(viewCards, {
       listIds: selectedListIds,
       query: searchQuery,
@@ -390,6 +493,7 @@ export function mountResultsView(container, { t, store, dataSource }) {
 
     // Group cards by list
     const groups = groupByList(filteredCards, scanResult.lists, sortOrder);
+    const memberMap = getMemberMap();
 
     groups.forEach(({ list, cards }) => {
       const groupCard = document.createElement('article');
@@ -488,6 +592,35 @@ export function mountResultsView(container, { t, store, dataSource }) {
           nameSpan.className = 'card-title';
           nameSpan.textContent = card.name;
 
+          // Assigned members initials badges (between card name and label chips)
+          const membersBadgeWrapper = document.createElement('div');
+          membersBadgeWrapper.className = 'card-members-badges';
+
+          if (Array.isArray(card.idMembers) && card.idMembers.length > 0) {
+            const assignedMembers = card.idMembers
+              .map((id) => memberMap.get(id))
+              .filter(Boolean);
+
+            const displayMembers = assignedMembers.slice(0, 2);
+            displayMembers.forEach((m) => {
+              const badge = document.createElement('span');
+              badge.className = 'member-initials-badge';
+              const color = getAvatarColor(m.id);
+              badge.style.backgroundColor = color.bg;
+              badge.style.color = color.text;
+              badge.textContent = m.initials;
+              badge.setAttribute('title', m.fullName);
+              membersBadgeWrapper.appendChild(badge);
+            });
+
+            if (assignedMembers.length > 2) {
+              const moreBadge = document.createElement('span');
+              moreBadge.className = 'member-badge-more';
+              moreBadge.textContent = `+${assignedMembers.length - 2}`;
+              membersBadgeWrapper.appendChild(moreBadge);
+            }
+          }
+
           const labelsWrapper = document.createElement('div');
           labelsWrapper.className = 'card-labels';
 
@@ -527,6 +660,9 @@ export function mountResultsView(container, { t, store, dataSource }) {
 
           row.appendChild(cardCheckbox);
           row.appendChild(nameSpan);
+          if (card.idMembers?.length > 0) {
+            row.appendChild(membersBadgeWrapper);
+          }
           row.appendChild(labelsWrapper);
           row.appendChild(openBtn);
           cardsList.appendChild(row);
@@ -550,39 +686,18 @@ export function mountResultsView(container, { t, store, dataSource }) {
       selectedListIds: allListIds,
       searchQuery: '',
       sortOrder: 'list-asc',
+      recentlyAssignedIds: new Set(),
       // selectedCardIds is deliberately preserved!
     });
   }
 
-  function renderDialog(currentState) {
-    if (!assignDialogOverlay) return;
-
-    if (currentState.dialogOpen) {
-      assignDialogOverlay.style.display = 'flex';
-      if (dialogCountBadge) {
-        const count = currentState.selectedCardIds.size;
-        dialogCountBadge.textContent = resultsContent.copy.assignDialog.selectedCountTemplate
-          .replace('{count}', count.toString())
-          .replace('{s}', count === 1 ? '' : 's');
-      }
-      btnDialogClose?.focus();
-    } else {
-      assignDialogOverlay.style.display = 'none';
-    }
-  }
-
-  function closeDialog() {
-    store.setState({ dialogOpen: false });
-    btnAssignMembers?.focus();
-  }
-
   // Event Listeners
   filterRadioUnassigned?.addEventListener('click', () => {
-    store.setState({ resultsViewMode: 'unassigned' });
+    store.setState({ resultsViewMode: 'unassigned', recentlyAssignedIds: new Set() });
   });
 
   filterRadioAll?.addEventListener('click', () => {
-    store.setState({ resultsViewMode: 'all' });
+    store.setState({ resultsViewMode: 'all', recentlyAssignedIds: new Set() });
   });
 
   btnResetFilters?.addEventListener('click', handleResetFilters);
@@ -601,30 +716,16 @@ export function mountResultsView(container, { t, store, dataSource }) {
 
   btnAssignMembers?.addEventListener('click', () => {
     if (store.getState().selectedCardIds.size > 0) {
-      // TODO: Future flow:
-      // 1. Pick members from Trello board members list
-      // 2. PUT /1/cards/{id}/idMembers per selected card (or batch request)
-      // 3. Refresh scan data from Trello REST API
-      store.setState({ dialogOpen: true });
+      assignDialog.open();
     }
   });
 
-  btnDialogClose?.addEventListener('click', closeDialog);
-
-  // Keyboard accessibility: Escape closes dialog
-  const handleKeyDown = (e) => {
-    if (e.key === 'Escape' && store.getState().dialogOpen) {
-      closeDialog();
-    }
-  };
-  window.addEventListener('keydown', handleKeyDown);
-
   // Subscribe to store updates
   unsubscribeStore = store.subscribe((currentState) => {
+    updateNotices(currentState);
     updateSidebar(currentState);
     updateMainHeader(currentState);
     updateCardsList(currentState);
-    renderDialog(currentState);
   });
 
   // Initial render
@@ -632,16 +733,16 @@ export function mountResultsView(container, { t, store, dataSource }) {
   if (sortSelect) sortSelect.value = initial.sortOrder;
   if (searchInput) searchInput.value = initial.searchQuery;
 
+  updateNotices(initial);
   updateSidebar(initial);
   updateMainHeader(initial);
   updateCardsList(initial);
-  renderDialog(initial);
 
   return {
     destroy() {
       clearTimeout(searchDebounceTimer);
       if (typeof unsubscribeStore === 'function') unsubscribeStore();
-      window.removeEventListener('keydown', handleKeyDown);
+      assignDialog.close();
     },
   };
 }

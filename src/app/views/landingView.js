@@ -1,14 +1,21 @@
 import { landingContent } from '../../config/landingContent.js';
+import * as dataSource from '../../data/dataSource.js';
 import { icons } from '../../ui/icons.js';
 
 /**
  * Mounts the landing screen view into the given container.
  *
  * @param {HTMLElement} container - The container element to mount into
- * @param {{ onStartScan: () => void }} handlers
+ * @param {{
+ *   t: any,
+ *   store: any,
+ *   onStartScan: () => void
+ * }} handlers
  * @returns {{ destroy: () => void }}
  */
-export function mountLandingView(container, { onStartScan }) {
+export function mountLandingView(container, { t, store, onStartScan }) {
+  const currentState = store.getState();
+
   container.innerHTML = `
     <div class="landing-view">
       <!-- Left Column: Illustration -->
@@ -37,6 +44,14 @@ export function mountLandingView(container, { onStartScan }) {
       <section class="landing-content-col" aria-label="Power-Up overview">
         <h1 class="landing-title" id="landingTitle"></h1>
         <p class="landing-subtitle" id="landingSubtitle"></p>
+
+        <!-- Inline error/reconnect message if any -->
+        <div
+          id="landingInlineMessage"
+          class="landing-inline-message"
+          role="alert"
+          style="${currentState.landingMessage ? 'display: block;' : 'display: none;'}"
+        ></div>
 
         <ul class="feature-list" id="featureList" role="list"></ul>
 
@@ -76,6 +91,18 @@ export function mountLandingView(container, { onStartScan }) {
   const subtitleEl = container.querySelector('#landingSubtitle');
   if (subtitleEl) {
     subtitleEl.textContent = landingContent.subtitle;
+  }
+
+  const inlineMsgEl = container.querySelector('#landingInlineMessage');
+  if (inlineMsgEl && currentState.landingMessage) {
+    inlineMsgEl.textContent = currentState.landingMessage;
+  }
+
+  function showInlineMessage(msg) {
+    if (inlineMsgEl) {
+      inlineMsgEl.textContent = msg;
+      inlineMsgEl.style.display = 'block';
+    }
   }
 
   // Feature rows
@@ -122,9 +149,29 @@ export function mountLandingView(container, { onStartScan }) {
   if (btnIconEnd && icons.arrowRight) btnIconEnd.innerHTML = icons.arrowRight;
   if (btnLabel) btnLabel.textContent = landingContent.cta.label;
 
+  /**
+   * Scan Board click handler.
+   * MUST stay synchronous up to the authorize call (NO await before it)
+   * to preserve the user gesture and prevent browser popup blocking.
+   */
   const handleScanClick = () => {
-    if (typeof onStartScan === 'function') {
+    const isAuth = store.getState().isAuthorized;
+
+    if (isAuth) {
+      store.setState({ landingMessage: '' });
       onStartScan();
+    } else {
+      // Synchronous authorize invocation directly inside click event
+      dataSource
+        .authorize(t)
+        .then(() => {
+          store.setState({ isAuthorized: true, landingMessage: '' });
+          onStartScan();
+        })
+        .catch((err) => {
+          console.warn('Authorization rejected or failed:', err);
+          showInlineMessage('Authorization is needed to scan your board. Try again.');
+        });
     }
   };
 
