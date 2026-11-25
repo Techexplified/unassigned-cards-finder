@@ -1,3 +1,4 @@
+import { appConfig } from '../../config/appConfig.js';
 import { landingContent } from '../../config/landingContent.js';
 import * as dataSource from '../../data/dataSource.js';
 import { icons } from '../../ui/icons.js';
@@ -155,6 +156,19 @@ export function mountLandingView(container, { t, store, onStartScan }) {
    * to preserve the user gesture and prevent browser popup blocking.
    */
   const handleScanClick = () => {
+    const isStub =
+      !t ||
+      (typeof window !== 'undefined' &&
+        window.location &&
+        window.location.search.includes('stub='));
+
+    if (!isStub && (!appConfig.appKey || appConfig.appKey === 'your_key_here')) {
+      showInlineMessage(
+        'Trello App Key is missing or not configured. Please ensure TRELLO_APP_KEY is set in your environment and redeploy.'
+      );
+      return;
+    }
+
     const isAuth = store.getState().isAuthorized;
 
     if (isAuth) {
