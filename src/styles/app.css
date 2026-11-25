@@ -338,13 +338,14 @@ body {
   position: relative;
   width: 100%;
   max-width: 320px;
-  height: 200px;
+  height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   border: none;
   outline: none;
+  box-shadow: none;
 }
 
 .scanning-illustration {
@@ -353,6 +354,9 @@ body {
   object-fit: contain;
   border: none;
   outline: none;
+  box-shadow: none;
+  display: block;
+  user-select: none;
 }
 
 .scanning-heading {
@@ -754,7 +758,8 @@ body {
 /* Main Column Layout */
 .results-main {
   height: 100%;
-  min-height: 0; /* CRITICAL: Enables nested flexbox child overflow-y: auto */
+  min-height: 0;
+  /* CRITICAL: Enables nested flexbox child overflow-y: auto */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -973,7 +978,8 @@ body {
 /* Grouped Lists Region (ONLY this region scrolls!) */
 .results-cards-container {
   flex: 1 1 auto;
-  min-height: 0; /* CRITICAL: Allows scrolling instead of shrinking */
+  min-height: 0;
+  /* CRITICAL: Allows scrolling instead of shrinking */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -989,7 +995,8 @@ body {
   border-radius: 10px;
   background-color: var(--surface-white);
   border: 1px solid var(--border-light);
-  flex-shrink: 0; /* CRITICAL: Never shrink card groups into each other */
+  flex-shrink: 0;
+  /* CRITICAL: Never shrink card groups into each other */
   overflow: hidden;
 }
 
@@ -1061,7 +1068,8 @@ body {
   padding: 8px 12px;
   border-bottom: 1px solid #F3EFF9;
   gap: 12px;
-  flex-shrink: 0; /* CRITICAL: Prevents cards from squishing or overlapping */
+  flex-shrink: 0;
+  /* CRITICAL: Prevents cards from squishing or overlapping */
   box-sizing: border-box;
   background-color: var(--surface-white);
   transition: background-color 0.1s ease;
@@ -1077,7 +1085,8 @@ body {
 
 .card-title {
   flex: 1 1 auto;
-  min-width: 0; /* CRITICAL: Allows ellipsis truncation without pushing sibling elements */
+  min-width: 0;
+  /* CRITICAL: Allows ellipsis truncation without pushing sibling elements */
   font-size: 13px;
   font-weight: 500;
   color: var(--text-dark);
@@ -1840,6 +1849,7 @@ body {
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -1854,6 +1864,7 @@ body {
 
 /* Respect prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
