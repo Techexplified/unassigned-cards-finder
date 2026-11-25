@@ -6,6 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Each new screen gets its own HTML entry here.
 export default defineConfig({
+  envPrefix: ['VITE_', 'TRELLO_'],
   build: {
     rollupOptions: {
       input: {

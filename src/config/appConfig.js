@@ -1,6 +1,6 @@
 // Application configuration for Unassigned Card Finder
 export const appConfig = {
-  appKey: import.meta.env.VITE_TRELLO_APP_KEY,
+  appKey: import.meta.env.TRELLO_APP_KEY || import.meta.env.VITE_TRELLO_APP_KEY,
   appName: 'Unassigned Card Finder',
   appAuthor: 'TODO', // TODO: Update with developer name or organization when publishing
 
