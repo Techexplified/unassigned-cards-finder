@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Unassigned Card Finder - Landing</title>
+    <title>Unassigned Card Finder</title>
     <!-- Trello Power-Up Client Library -->
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
-    <link rel="stylesheet" href="./src/landing/landing.css" />
+    <link rel="stylesheet" href="./src/styles/app.css" />
   </head>
   <body>
     <div class="modal-container">
-      <!-- Header bar -->
+      <!-- Shared Header bar across all views -->
       <header class="app-header">
         <div class="header-brand">
           <span class="header-icon" id="headerIcon" aria-hidden="true"></span>
@@ -19,75 +19,10 @@
         <!-- Trello provides the modal close control in the top-right corner; no custom close button rendered here -->
       </header>
 
-      <!-- Main two-column content -->
-      <main class="app-body">
-        <!-- Left column: Illustration -->
-        <section class="illustration-col" aria-label="Visual illustration">
-          <div class="illustration-wrapper">
-            <img
-              id="landingIllustration"
-              src="./assets/landing-illustration.png"
-              alt="Illustration of Trello board cards and unassigned member card search"
-              class="landing-illustration"
-            />
-            <div
-              id="illustrationFallback"
-              class="illustration-fallback"
-              role="img"
-              aria-label="Illustration placeholder"
-              style="display: none;"
-            >
-              <div class="fallback-badge">
-                <span class="fallback-title">Illustration Area</span>
-                <span class="fallback-desc">public/assets/landing-illustration.png</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Right column: Text, features & CTA -->
-        <section class="content-col" aria-label="Power-Up overview">
-          <h1 class="landing-title" id="landingTitle"></h1>
-          <p class="landing-subtitle" id="landingSubtitle"></p>
-
-          <ul class="feature-list" id="featureList" role="list">
-            <!-- Dynamically populated from src/config/landingContent.js -->
-          </ul>
-
-          <div class="cta-section">
-            <button
-              type="button"
-              class="btn-scan"
-              id="btnScan"
-              aria-label="Scan Board for unassigned cards"
-            >
-              <span class="btn-icon btn-icon-start" id="btnIconStart" aria-hidden="true"></span>
-              <span class="btn-spinner" id="btnSpinner" aria-hidden="true" style="display: none;"></span>
-              <span class="btn-label" id="btnLabel">Scan Board</span>
-              <span class="btn-icon btn-icon-end" id="btnIconEnd" aria-hidden="true"></span>
-            </button>
-            <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
-          </div>
-        </section>
-      </main>
-
-      <!-- Decorative bottom wave -->
-      <div class="wave-container" aria-hidden="true">
-        <svg
-          class="bottom-wave"
-          viewBox="0 0 1440 120"
-          preserveAspectRatio="none"
-          focusable="false"
-        >
-          <path
-            fill="#EDE5FA"
-            fill-opacity="0.7"
-            d="M0,64L60,69.3C120,75,240,85,360,74.7C480,64,600,32,720,26.7C840,21,960,43,1080,53.3C1200,64,1320,64,1380,64L1440,64L1440,120L1380,120C1320,120,1200,120,1080,120C960,120,840,120,720,120C600,120,480,120,360,120C240,120,120,120,60,120L0,120Z"
-          ></path>
-        </svg>
-      </div>
+      <!-- View container swapped in place: landing -> scanning -> results -->
+      <div id="viewContainer" class="view-container"></div>
     </div>
 
-    <script type="module" src="./src/landing/landing.js"></script>
+    <script type="module" src="./src/app/main.js"></script>
   </body>
 </html>

@@ -13,7 +13,7 @@ if (typeof window !== 'undefined' && typeof window.TrelloPowerUp !== 'undefined'
             callback: function (t) {
               return t.modal({
                 url: './landing.html',
-                height: 520,
+                height: 600,
                 fullscreen: false,
               });
             },
